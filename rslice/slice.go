@@ -1,11 +1,6 @@
-package ramda
+package rslice
 
-import (
-	"sort"
-)
-
-// Map applies a function to each element in a slice and returns a new slice
-// containing the results. It transforms each element using the provided function.
+// Map applies a function to each element of a slice and returns a new slice with the results.
 //
 // Example:
 //
@@ -20,14 +15,13 @@ func Map[T, R any](fn func(T) R, slice []T) []R {
 	return result
 }
 
-// Filter returns a new slice containing only the elements that satisfy the predicate function.
-// It removes elements for which the predicate returns false.
+// Filter creates a new slice containing only the elements that satisfy the predicate function.
 //
 // Example:
 //
-//	numbers := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+//	numbers := []int{1, 2, 3, 4, 5, 6}
 //	even := Filter(func(n int) bool { return n%2 == 0 }, numbers)
-//	// Result: []int{2, 4, 6, 8, 10}
+//	// Result: []int{2, 4, 6}
 func Filter[T any](fn func(T) bool, slice []T) []T {
 	result := make([]T, 0, len(slice))
 	for _, v := range slice {
@@ -38,8 +32,7 @@ func Filter[T any](fn func(T) bool, slice []T) []T {
 	return result
 }
 
-// Reduce applies a function to each element in a slice, accumulating the result.
-// It starts with the initial value and applies the function from left to right.
+// Reduce applies a function to each element of a slice, accumulating the result.
 //
 // Example:
 //
@@ -54,8 +47,7 @@ func Reduce[T, R any](fn func(R, T) R, initial R, slice []T) R {
 	return result
 }
 
-// Find returns the first element in the slice that satisfies the predicate function,
-// along with a boolean indicating whether such an element was found.
+// Find returns the first element that satisfies the predicate function, along with a boolean indicating if an element was found.
 //
 // Example:
 //
@@ -63,17 +55,16 @@ func Reduce[T, R any](fn func(R, T) R, initial R, slice []T) R {
 //	found, exists := Find(func(n int) bool { return n > 3 }, numbers)
 //	// Result: found = 4, exists = true
 func Find[T any](fn func(T) bool, slice []T) (T, bool) {
-	var zero T
 	for _, v := range slice {
 		if fn(v) {
 			return v, true
 		}
 	}
+	var zero T
 	return zero, false
 }
 
 // Any returns true if at least one element in the slice satisfies the predicate function.
-// It stops searching as soon as it finds a matching element.
 //
 // Example:
 //
@@ -89,8 +80,7 @@ func Any[T any](fn func(T) bool, slice []T) bool {
 	return false
 }
 
-// All returns true if every element in the slice satisfies the predicate function.
-// It stops searching as soon as it finds a non-matching element.
+// All returns true if all elements in the slice satisfy the predicate function.
 //
 // Example:
 //
@@ -106,8 +96,7 @@ func All[T any](fn func(T) bool, slice []T) bool {
 	return true
 }
 
-// Take returns the first n elements from the slice.
-// If n is greater than the slice length, it returns the entire slice.
+// Take returns the first n elements from a slice.
 //
 // Example:
 //
@@ -119,13 +108,12 @@ func Take[T any](n int, slice []T) []T {
 		return []T{}
 	}
 	if n >= len(slice) {
-		return slice
+		return append([]T{}, slice...)
 	}
-	return slice[:n]
+	return append([]T{}, slice[:n]...)
 }
 
-// Drop returns the slice with the first n elements removed.
-// If n is greater than the slice length, it returns an empty slice.
+// Drop returns a slice with the first n elements removed.
 //
 // Example:
 //
@@ -134,25 +122,25 @@ func Take[T any](n int, slice []T) []T {
 //	// Result: []int{3, 4, 5}
 func Drop[T any](n int, slice []T) []T {
 	if n <= 0 {
-		return slice
+		return append([]T{}, slice...)
 	}
 	if n >= len(slice) {
 		return []T{}
 	}
-	return slice[n:]
+	return append([]T{}, slice[n:]...)
 }
 
-// Unique returns a new slice containing only unique elements from the input slice.
-// It removes all duplicates while preserving the order of first occurrence.
+// Unique returns a new slice with duplicate elements removed.
 //
 // Example:
 //
-//	numbers := []int{1, 2, 2, 3, 3, 3, 4, 4, 4, 4}
+//	numbers := []int{1, 2, 2, 3, 3, 3, 4}
 //	unique := Unique(numbers)
 //	// Result: []int{1, 2, 3, 4}
 func Unique[T comparable](slice []T) []T {
 	seen := make(map[T]struct{})
 	result := make([]T, 0, len(slice))
+
 	for _, v := range slice {
 		if _, exists := seen[v]; !exists {
 			seen[v] = struct{}{}
@@ -162,8 +150,7 @@ func Unique[T comparable](slice []T) []T {
 	return result
 }
 
-// Flatten converts a 2D slice into a 1D slice by concatenating all inner slices.
-// It preserves the order of elements as they appear in the input.
+// Flatten converts a slice of slices into a single slice.
 //
 // Example:
 //
@@ -172,24 +159,20 @@ func Unique[T comparable](slice []T) []T {
 //	// Result: []int{1, 2, 3, 4, 5}
 func Flatten[T any](slice [][]T) []T {
 	var result []T
-	for _, v := range slice {
-		result = append(result, v...)
+	for _, subSlice := range slice {
+		result = append(result, subSlice...)
 	}
 	return result
 }
 
-// Zip combines two slices into a slice of pairs, where each pair contains elements
-// at the same index from both input slices. The result is truncated to the length
-// of the shorter input slice.
+// Zip combines two slices into a slice of pairs.
 //
 // Example:
 //
 //	numbers := []int{1, 2, 3}
 //	letters := []string{"a", "b", "c"}
 //	zipped := Zip(numbers, letters)
-//	// Result: []struct{First: int, Second: string}{
-//	//   {1, "a"}, {2, "b"}, {3, "c"},
-//	// }
+//	// Result: []struct{First int; Second string}{{1, "a"}, {2, "b"}, {3, "c"}}
 func Zip[T, U any](slice1 []T, slice2 []U) []struct {
 	First  T
 	Second U
@@ -198,24 +181,23 @@ func Zip[T, U any](slice1 []T, slice2 []U) []struct {
 	if len(slice2) < minLen {
 		minLen = len(slice2)
 	}
+
 	result := make([]struct {
 		First  T
 		Second U
 	}, minLen)
+
 	for i := 0; i < minLen; i++ {
 		result[i] = struct {
 			First  T
 			Second U
-		}{
-			First:  slice1[i],
-			Second: slice2[i],
-		}
+		}{slice1[i], slice2[i]}
 	}
+
 	return result
 }
 
-// Reverse returns a new slice with the elements in reverse order.
-// It does not modify the input slice.
+// Reverse returns a new slice with elements in reverse order.
 //
 // Example:
 //
@@ -230,22 +212,18 @@ func Reverse[T any](slice []T) []T {
 	return result
 }
 
-// GroupBy returns a map where the keys are the results of applying the function
-// to each element, and the values are slices of elements that produced that key.
+// GroupBy groups elements of a slice by a key function.
 //
 // Example:
 //
-//	numbers := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+//	numbers := []int{1, 2, 3, 4, 5, 6}
 //	grouped := GroupBy(func(n int) string {
-//	  if n%2 == 0 {
-//	    return "even"
-//	  }
-//	  return "odd"
+//		if n%2 == 0 {
+//			return "even"
+//		}
+//		return "odd"
 //	}, numbers)
-//	// Result: map[string][]int{
-//	//   "even": []int{2, 4, 6, 8, 10},
-//	//   "odd":  []int{1, 3, 5, 7, 9},
-//	// }
+//	// Result: map[string][]int{"even": {2, 4, 6}, "odd": {1, 3, 5}}
 func GroupBy[T any, K comparable](fn func(T) K, slice []T) map[K][]T {
 	result := make(map[K][]T)
 	for _, v := range slice {
@@ -255,20 +233,80 @@ func GroupBy[T any, K comparable](fn func(T) K, slice []T) map[K][]T {
 	return result
 }
 
-// SortBy sorts a slice using the provided comparison function.
-// The comparison function should return true if the first argument should come
-// before the second argument in the sorted result.
+// SortBy sorts a slice using a comparison function.
 //
 // Example:
 //
-//	numbers := []int{3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5}
+//	numbers := []int{3, 1, 4, 1, 5, 9, 2, 6}
 //	sorted := SortBy(func(a, b int) bool { return a < b }, numbers)
-//	// Result: []int{1, 1, 2, 3, 3, 4, 5, 5, 5, 6, 9}
+//	// Result: []int{1, 1, 2, 3, 4, 5, 6, 9}
 func SortBy[T any](fn func(T, T) bool, slice []T) []T {
 	result := make([]T, len(slice))
 	copy(result, slice)
-	sort.Slice(result, func(i, j int) bool {
-		return fn(result[i], result[j])
-	})
+
+	// Simple bubble sort for demonstration
+	// In practice, you might want to use a more efficient sorting algorithm
+	for i := 0; i < len(result)-1; i++ {
+		for j := 0; j < len(result)-i-1; j++ {
+			if !fn(result[j], result[j+1]) {
+				result[j], result[j+1] = result[j+1], result[j]
+			}
+		}
+	}
+	return result
+}
+
+// IndexBy creates a map from a slice using a function to generate keys.
+// Each element in the slice becomes a value in the map, with the key determined
+// by applying the provided function to the element. If multiple elements produce
+// the same key, the last element will overwrite previous ones.
+//
+// Example:
+//
+//	users := []struct{ID string; Name string}{
+//	  {ID: "1", Name: "Alice"},
+//	  {ID: "2", Name: "Bob"},
+//	  {ID: "3", Name: "Charlie"},
+//	}
+//	indexed := IndexBy(func(u struct{ID string; Name string}) string { return u.ID }, users)
+//	// Result: map[string]struct{ID string; Name string}{
+//	//   "1": {ID: "1", Name: "Alice"},
+//	//   "2": {ID: "2", Name: "Bob"},
+//	//   "3": {ID: "3", Name: "Charlie"},
+//	// }
+func IndexBy[T any, K comparable](fn func(T) K, slice []T) map[K]T {
+	result := make(map[K]T, len(slice))
+	for _, v := range slice {
+		key := fn(v)
+		result[key] = v
+	}
+	return result
+}
+
+// ToSet creates a set-like map from a slice of comparable values.
+// The result is a map[T]struct{} which can be used for efficient membership checking.
+// Duplicate values are automatically handled since map keys must be unique.
+//
+// Example:
+//
+//	numbers := []int{1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5}
+//	numberSet := ToSet(numbers)
+//	// Result: map[int]struct{}{
+//	//   1: {},
+//	//   2: {},
+//	//   3: {},
+//	//   4: {},
+//	//   5: {},
+//	// }
+//
+//	// Check membership
+//	if _, exists := numberSet[2]; exists {
+//	  fmt.Println("2 is in the set")
+//	}
+func ToSet[T comparable](slice []T) map[T]struct{} {
+	result := make(map[T]struct{}, len(slice))
+	for _, v := range slice {
+		result[v] = struct{}{}
+	}
 	return result
 }
